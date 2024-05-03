@@ -36,7 +36,8 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
     console.log(error);
     const status = error.statusCode || 500;
     const message = error.message;
-    res.status(status).json({message: message});
+    const data = error.data;
+    res.status(status).json({message: message , data: data});
 });
 
 const MONGODB_URI = 'mongodb+srv://mostafaashraf334:WYcZ6tE22UmPdt55@cluster0.s8regf6.mongodb.net/market?retryWrites=true&w=majority';
