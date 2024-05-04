@@ -10,10 +10,13 @@ const app = express();
 
 const fileStorage = multer.diskStorage({
     destination: (req: Request, file: Express.Multer.File, cb: any) => {
-        cb(null, 'images');
+        cb(null, 'src/images');
     },
     filename: (req: Request, file: Express.Multer.File, cb: any) => {
-        cb(null, file.originalname);
+        const sanitizedDate = new Date().toISOString().replace(/:/g, '_');
+        const sanitizedOriginalName = file.originalname.replace(/-/g, '');
+        const filename = sanitizedDate + '-' + sanitizedOriginalName;
+        cb(null, filename);
     }
 });
 

@@ -4,7 +4,7 @@ export interface IProduct extends Document {
     title: string;
     imageUrl: string;
     description: string;
-    creator?: Types.ObjectId; // Assuming IUser interface is defined
+    creator?: Types.ObjectId;
 }
 
 export type ProductDocument = IProduct & Document;
@@ -23,9 +23,9 @@ const productSchema: Schema = new Schema({
         required: true,
     },
     creator: {
-        // type: Schema.Types.ObjectId,
-        // ref: 'User',
-        // required: true
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     },
 },
 { timestamps: true }

@@ -1,8 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
 import Product, { ProductDocument } from '../models/product';
+import User from '../models/user';
 import fs from 'fs';
 import path from 'path';
+
+interface AuthRequest extends Request {
+    userId?: string;
+}
 
 export const getProducts = (req: Request, res: Response, next: NextFunction): void => {
     const currentPage: number = req.query.page ? +req.query.page : 1  ;
@@ -46,7 +51,7 @@ export const getProduct = (req: Request, res: Response, next: NextFunction): voi
         });
 };
 
-export const createProduct = (req: Request, res: Response, next: NextFunction): void => {
+export const createProduct = (req: AuthRequest, res: Response, next: NextFunction): void => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = new Error('Validation failed, entered data is incorrect.');
@@ -60,18 +65,28 @@ export const createProduct = (req: Request, res: Response, next: NextFunction): 
     }
     const imageUrl = req.file.path;
     const { title, description } = req.body;
+    let creator: any;
     const product = new Product({
         imageUrl,
         title,
         description,
-        creator: { name: 'Max' }
+        creator: req.userId
     });
     product
         .save()
-        .then((result: ProductDocument) => {
+        .then(result => {
+            return User.findById(req.userId);
+        })
+        .then((user: any) =>{
+            creator = user;
+            user.products.push(req.userId);
+            return user.save();
+        })
+        .then(result => {
             res.status(201).json({
                 message: 'Product Created successfully',
-                product: result
+                product: product,
+                creator: {_id: creator._id, name: creator.name}
             });
         })
         .catch((err: any) => {
@@ -82,7 +97,7 @@ export const createProduct = (req: Request, res: Response, next: NextFunction): 
         });
 };
 
-export const updateProduct = (req: Request, res: Response, next: NextFunction): void => {
+export const updateProduct = (req: AuthRequest, res: Response, next: NextFunction): void => {
     const productId = req.params.productId;
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -109,6 +124,12 @@ export const updateProduct = (req: Request, res: Response, next: NextFunction): 
                 throw error;
             }
 
+            if (!product.creator || product.creator.toString() !== req.userId){
+                const error = new Error('Not authorized!');
+                (error as any).statusCode = 403;
+                throw error;
+            }
+
             if (imageUrl !== product.imageUrl) {
                 clearImage(product.imageUrl);
             }
@@ -130,11 +151,12 @@ export const updateProduct = (req: Request, res: Response, next: NextFunction): 
 };
 
 const clearImage = (filePath: string): void => {
-    filePath = path.join(__dirname, '..', filePath);
+    // filePath = path.join(__dirname, '..', '..', 'images', filePath);
     fs.unlink(filePath, (err: NodeJS.ErrnoException | null) => console.log(err));
+    console.log('wasalta');
 };
 
-export const deleteProduct = (req: Request, res: Response, next: NextFunction): void => {
+export const deleteProduct = (req: AuthRequest, res: Response, next: NextFunction): void => {
     const productId = req.params.productId;
     Product.findById(productId)
         .then((product: ProductDocument | null) => {
@@ -143,12 +165,31 @@ export const deleteProduct = (req: Request, res: Response, next: NextFunction): 
                 (error as any).statusCode = 404;
                 throw error;
             }
+            if (!product.creator || product.creator.toString() !== req.userId){
+                const error = new Error('Not authorized!');
+                (error as any).statusCode = 403;
+                throw error;
+            }
             clearImage(product.imageUrl);
             return Product.findByIdAndDelete(productId);
         })
         .then((result: ProductDocument | null) => {
-            console.log(result);
+            return User.findById(req.userId);
+        })
+        .then(user => {
+            if (!user) {
+                throw new Error('User not found');
+            }
+            if (user.products) {
+                user.products.pull(productId);
+                return user.save();
+            } else {
+                throw new Error('User products array not found');
+            }
+        })
+        .then(result => {
             res.status(200).json({ message: 'Product Deleted' });
+            console.log('hase wasalta');
         })
         .catch((err: any) => {
             if (!err.statusCode) {
