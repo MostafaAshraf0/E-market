@@ -4,20 +4,23 @@ import {
     deleteProduct,
     getProduct,
     getProducts,
-    updateProduct
+    updateProduct,
+    searchProduct,
 } from '../controllers/productController';
 import isAuth from '../middleware/is-auth';
 
 const router = express.Router();
 
-router.get('/products', isAuth, getProducts);
+router.get('/products', getProducts);
 
-router.get('/product/:productId', getProduct);
+router.get('/products/:productId', getProduct);
 
 router.post('/product/create',isAuth, createProduct);
 
 router.put('/update/:productId',isAuth, updateProduct);
 
 router.delete('/delete/:productId',isAuth, deleteProduct);
+
+router.get('/search', searchProduct);
 
 export default router;

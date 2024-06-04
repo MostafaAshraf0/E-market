@@ -4,6 +4,7 @@ import Product, { ProductDocument } from '../models/product';
 import User from '../models/user';
 import fs from 'fs';
 import path from 'path';
+import product from '../models/product';
 
 interface AuthRequest extends Request {
     userId?: string;
@@ -11,13 +12,14 @@ interface AuthRequest extends Request {
 
 export const getProducts = (req: Request, res: Response, next: NextFunction): void => {
     const currentPage: number = req.query.page ? +req.query.page : 1  ;
-    const perPage: number = 2;
+    const perPage: number = 4;
     let totalitems: number ;
     Product.find()
     .countDocuments()
     .then(count => {
         totalitems = count;
         return Product.find()
+        .sort({ createdAt: -1 })
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
     })
@@ -63,13 +65,15 @@ export const createProduct = (req: AuthRequest, res: Response, next: NextFunctio
         (error as any).statusCode = 422;
         throw error;
     }
-    const imageUrl = req.file.path;
-    const { title, description } = req.body;
+    const imageUrl = req.file.path.replace(/\\/g, '/');
+    console.log({ imageUrl });
+    const { title, description, price } = req.body;
     let creator: any;
     const product = new Product({
         imageUrl,
         title,
         description,
+        price,
         creator: req.userId
     });
     product
@@ -105,17 +109,17 @@ export const updateProduct = (req: AuthRequest, res: Response, next: NextFunctio
         (error as any).statusCode = 422;
         throw error;
     }
-    const { title, description } = req.body;
+    const { title, description, price } = req.body;
     let imageUrl = req.body.image;
 
     if (req.file) {
         imageUrl = req.file.path;
     }
-    if (!imageUrl) {
-        const error = new Error('No File Picked');
-        (error as any).statusCode = 422;
-        throw error;
-    }
+    // if (!imageUrl) {
+    //     const error = new Error('No File Picked');
+    //     (error as any).statusCode = 422;
+    //     throw error;
+    // }
     Product.findById(productId)
         .then((product: ProductDocument | null) => {
             if (!product) {
@@ -129,14 +133,16 @@ export const updateProduct = (req: AuthRequest, res: Response, next: NextFunctio
                 (error as any).statusCode = 403;
                 throw error;
             }
-
+            
             if (imageUrl !== product.imageUrl) {
+                console.log({produrl: product.imageUrl, replaced: product.imageUrl.replace(/\\/g, '/') });
                 clearImage(product.imageUrl);
             }
-
-            product.imageUrl = imageUrl;
+            
+            product.imageUrl = imageUrl ? imageUrl.replace(/\\/g, '/') : product.imageUrl;
             product.title = title;
             product.description = description;
+            product.price = price;
             return product.save();
         })
         .then((result: ProductDocument) => {
@@ -200,3 +206,18 @@ export const deleteProduct = (req: AuthRequest, res: Response, next: NextFunctio
 };
 
 
+export const searchProduct = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const {keyword} = req.query;
+        const products: ProductDocument[] = await Product.find({
+            $or: [
+                {title: {$regex: keyword}},
+                { description: { $regex: keyword} },
+            ],
+        });
+        res.status(200).json({ products });
+    } catch (error) {
+        console.error('Error searching products:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};

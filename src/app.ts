@@ -30,7 +30,15 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: any) => {
 
 app.use(bodyParser.json());
 app.use(multer({storage: fileStorage,fileFilter: fileFilter}).single('image'));
-app.use('/images', express.static(path.join(__dirname, '/images')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    // res.sendStatus(200);
+    next();
+});
 
 app.use('/user', userRoutes);
 app.use(productRoutes);
