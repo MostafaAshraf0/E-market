@@ -7,7 +7,7 @@ import {
     updateProduct,
     searchProduct,
 } from '../controllers/productController';
-import isAuth from '../middleware/is-auth';
+import { authMiddleware, authorize } from '../middleware/is-auth';
 
 const router = express.Router();
 
@@ -15,11 +15,11 @@ router.get('/products', getProducts);
 
 router.get('/products/:productId', getProduct);
 
-router.post('/product/create',isAuth, createProduct);
+router.post('/product/create',authMiddleware,authorize(['admin']), createProduct);
 
-router.put('/update/:productId',isAuth, updateProduct);
+router.put('/update/:productId',authMiddleware, updateProduct);
 
-router.delete('/delete/:productId',isAuth, deleteProduct);
+router.delete('/delete/:productId',authMiddleware, deleteProduct);
 
 router.get('/search', searchProduct);
 

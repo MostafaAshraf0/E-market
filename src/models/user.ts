@@ -6,16 +6,19 @@ export interface IUser extends Document {
     name: string;
     status: string;
     products: mongoose.Types.Array<mongoose.Types.ObjectId>;
+    role: 'user' | 'editor' | 'admin';
 }
 
 const userSchema: Schema = new Schema({
     email: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     password: {
         type: String,
-        required: true
+        required: true,
+        // select: false
     },
     name: {
         type: String,
@@ -28,7 +31,13 @@ const userSchema: Schema = new Schema({
     products: [{
         type: Schema.Types.ObjectId,
         ref: 'Product',
-    }]
+    }],
+    role: {
+        type: String,
+        enum: ['user', 'editor', 'admin'],
+        required: true,
+        default: 'user'
+    }
 });
 
 export default mongoose.model<IUser>('User', userSchema);

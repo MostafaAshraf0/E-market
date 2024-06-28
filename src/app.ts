@@ -51,10 +51,10 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
     res.status(status).json({message: message , data: data});
 });
 
-const MONGODB_URI = 'mongodb+srv://mostafaashraf334:WYcZ6tE22UmPdt55@cluster0.s8regf6.mongodb.net/market?retryWrites=true&w=majority';
+const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.s8regf6.mongodb.net/${process.env.MONGO_DEFAULT_DATABASE}?retryWrites=true&w=majority`;
 mongoose.connect(MONGODB_URI)
 .then(result => {
     console.log('mongo')
-    app.listen(8080);
+    app.listen(process.env.PORT || 8080);
 })
 .catch(err => console.log(err));

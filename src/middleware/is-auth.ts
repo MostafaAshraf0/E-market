@@ -3,8 +3,9 @@ import { Request, Response, NextFunction } from 'express';
 
 interface AuthRequest extends Request {
     userId?: string;
+    role?: 'user' | 'editor' | 'admin';
 }
-const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void =>{
+export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): void =>{
     const authHeader = req.get('Authorization');
     if(!authHeader){
         const error = new Error('Authorization header not found');
@@ -14,7 +15,7 @@ const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): vo
     const token = authHeader.split(' ')[1];
     let decodedToken;
     try{
-        decodedToken = jwt.verify(token, 'somesupersecretsecret') as { userId: string };
+        decodedToken = jwt.verify(token, 'somesupersecretsecret') as { userId: string , role: any };
     } catch (err) {
         (err as any).statusCode = 500;
         throw err;
@@ -25,6 +26,17 @@ const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): vo
         throw error;
     }
     req.userId = decodedToken.userId;
+    req.role = decodedToken.role;
     next();
 };
-export default authMiddleware;
+
+export const authorize = (roles: Array<'user' | 'editor' | 'admin'>) =>{
+    return (req: AuthRequest, res: Response, next: NextFunction) =>{
+        if(!roles.includes(req.role as 'user' | 'editor' | 'admin')) {
+            const error = new Error('Not Authorized.');
+            (error as any).statusCode = 403;
+            throw error;
+        }
+        next();
+    };
+};
