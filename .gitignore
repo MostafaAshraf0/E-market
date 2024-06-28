@@ -31,6 +31,7 @@ build/Release
 
 # Environment variables file
 .env
+.nodemon.json
 
 # IDE files
 .idea/
