@@ -5,6 +5,10 @@ import path from 'path';
 import multer from 'multer';
 import userRoutes from './routes/user';
 import productRoutes from './routes/product';
+import helmet from 'helmet';
+import compression from 'compression';
+import morgan from 'morgan';
+import fs from 'fs';
 
 const app = express();
 
@@ -42,6 +46,12 @@ app.use((req, res, next) => {
 
 app.use('/user', userRoutes);
 app.use(productRoutes);
+
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'});
+
+app.use(helmet());
+app.use(compression());
+app.use(morgan('combined', {stream: accessLogStream}));
 
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
     console.log(error);
