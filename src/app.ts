@@ -65,6 +65,6 @@ const MONGODB_URI = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO
 mongoose.connect(MONGODB_URI)
 .then(result => {
     console.log('mongo')
-    app.listen(process.env.PORT || 8080);
+    app.listen(process.env.PORT || 4000);
 })
 .catch(err => console.log(err));
