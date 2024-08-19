@@ -5,6 +5,8 @@ import path from 'path';
 import multer from 'multer';
 import userRoutes from './routes/user';
 import productRoutes from './routes/product';
+import orderRoutes from './routes/order';
+import cartRoutes from './routes/cart';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
@@ -46,6 +48,8 @@ app.use((req, res, next) => {
 
 app.use('/user', userRoutes);
 app.use(productRoutes);
+app.use('/order', orderRoutes);
+app.use('/cart', cartRoutes);
 
 const accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'});
 

@@ -37,7 +37,7 @@ const userSchema: Schema = new Schema({
         enum: ['user', 'editor', 'admin'],
         required: true,
         default: 'user'
-    }
+    },
 });
 
 export default mongoose.model<IUser>('User', userSchema);
